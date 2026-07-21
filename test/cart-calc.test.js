@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { calcularMontos } = require('./cart-calc.js');
+const { calcularMontos } = require('../cart-calc.js');
 
 test('un producto individual calcula base, IVA y total correctamente', () => {
   const { amount, amountWithTax, tax } = calcularMontos(10, 1);
