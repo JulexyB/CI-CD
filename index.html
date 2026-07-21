@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Closet Urbano - Pago con Payphone</title>
+
+    <!-- 1. CSS de Payphone -->
+    <link rel="stylesheet"
+          href="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.css">
+    <!-- 2. SDK JavaScript de Payphone -->
+    <script type="module"
+            src="https://cdn.payphonetodoesposible.com/box/v2.0/payphone-payment-box.js">
+    </script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 24px 16px 60px;
+            color: #222;
+            background: #faf7f8;
+        }
+        header { text-align: center; margin-bottom: 18px; }
+        header h1 { font-size: 26px; margin: 0; }
+        header p { color: #777; font-size: 14px; margin-top: 4px; }
+
+        /* ---- Grid de productos ---- */
+        #catalogo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .producto-wrap { position: relative; }
+        .producto {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color .15s, transform .15s;
+        }
+        .producto:hover { transform: translateY(-2px); }
+        .producto.seleccionado {
+            border-color: #c2185b;
+            box-shadow: 0 4px 14px rgba(194,24,91,0.18);
+        }
+        .producto img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            display: block;
+            background: #f0f0f0;
+        }
+        .producto .info { padding: 8px 10px 10px; }
+        .producto .nombre { font-weight: 600; font-size: 13.5px; line-height: 1.25; }
+        .producto .precio { color: #c2185b; font-weight: 700; font-size: 14px; margin-top: 4px; }
+        .check-badge {
+            position: absolute;
+            top: 8px; right: 8px;
+            background: #c2185b;
+            color: white;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            display: none;
+            align-items: center; justify-content: center;
+            font-size: 13px;
+        }
+        .producto-wrap.seleccionado .check-badge { display: flex; }
+
+        /* ---- Resumen / cantidad ---- */
+        #resumenCard {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            margin-bottom: 18px;
+        }
+        .resumen-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .resumen-top img {
+            width: 56px; height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+        .resumen-nombre { font-weight: 700; font-size: 15px; }
+        .resumen-precio-unit { color: #888; font-size: 12.5px; margin-top: 2px; }
+
+        .cantidad-control {
+            display: flex; align-items: center; gap: 10px;
+            margin-left: auto;
+        }
+        .cantidad-control button {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: #f7f7f7;
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .cantidad-control span { font-weight: 700; min-width: 18px; text-align: center; }
+
+        .desglose {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #e3e3e3;
+            font-size: 13.5px;
+            color: #555;
+        }
+        .desglose .fila { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .desglose .total { font-weight: 800; font-size: 16px; color: #222; margin-top: 6px; }
+
+        /* ---- Formulario ---- */
+        .form-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .form-card h3 { margin: 0 0 12px; font-size: 15px; color: #444; }
+        label { display: block; margin-top: 12px; font-size: 12.5px; color: #777; font-weight: 600; }
+        input {
+            width: 100%; padding: 10px;
+            margin-top: 4px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #c2185b; }
+
+        button#btnPagar {
+            margin-top: 18px;
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #c2185b, #8e1647);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        button#btnPagar:hover { opacity: 0.92; }
+
+        #pp-button { margin-top: 18px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>👕 Closet Urbano</h1>
+        <p>Elige tu prenda, la cantidad y paga seguro con Payphone</p>
+    </header>
+
+    <!-- Catálogo: tarjetas con imagen -->
+    <div id="catalogo"></div>
+
+    <!-- Resumen del producto seleccionado + selector de cantidad -->
+    <div id="resumenCard"></div>
+
+    <!-- Formulario de datos del cliente -->
+    <div class="form-card">
+        <h3>Datos para el pago</h3>
+        <label for="nombre">Nombre completo
+            <input type="text" id="nombre" placeholder="Julexy Bajaña">
+        </label>
+        <label for="email">Correo electrónico
+            <input type="email" id="email" placeholder="tucorreo@email.com">
+        </label>
+        <label for="telefono">Teléfono (Ecuador, sin 0 inicial)
+            <input type="text" id="telefono" placeholder="991234567">
+        </label>
+        <label for="documentId">Cédula
+            <input type="text" id="documentId" placeholder="1351349608">
+        </label>
+
+        <button id="btnPagar">💳 Pagar con Payphone</button>
+    </div>
+
+    <!-- Contenedor del botón de pago de Payphone -->
+    <div id="pp-button"></div>
+
+    <script src="cart-calc.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
